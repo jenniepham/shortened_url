@@ -2,11 +2,55 @@
 
 var express = require('express');
 var app = express();
-var urlList = ['https://jennie-api-project-jpdomo.c9users.io'];
+require('dotenv').config();
+
+var MongoClient = require('mongodb').MongoClient
+  , assert = require('assert');
+
+var MongoUrl = process.env.MONGODB_URI;
+var urlList = [];
+var listEntry;
+var link;
+
+
+MongoClient.connect(MongoUrl, function(err, db) {
+  assert.equal(null, err);
+  console.log("Connected successfully to get server");
+  
+  findDocuments(db, function() {
+     db.close();
+    });
+    
+});
+
+var findDocuments = function(db, callback) {
+  // Get the documents collection
+  var collection = db.collection('url');
+  // Find some documents
+  collection.find({}, {"_id": false}).toArray(function(err, docs) {
+    assert.equal(err, null);
+    console.log("Found the following records");
+    callback(docs);
+    urlList = docs;
+    listEntry = urlList.length;
+    console.log(urlList);
+  });
+};
+
+
+   
+   var insertDocuments = function(db, callback){
+    var collection = db.collection('url');
+    
+    collection.insert({'no':listEntry.toString(), 'short-url':link});
+    console.log({'no':listEntry, 'short-url':link});
+
+};
+
 
 function isURL(aUrl){
     
-    aUrl = aUrl.toString()
+    aUrl = aUrl.toString();
     
     if (aUrl.indexOf('http') === -1) {
         
@@ -30,38 +74,66 @@ app.get('/', function(request, response){
  
     
 });
-
-
+////////////////////////////////////////////
 app.get('/:url', function(request, response){
    var url = request.params.url;
+   var specificDoc = [];
    
-    if (urlList[url]) {
+if (!isNaN(url)){
+var findOne = function(db, callback) {
+  // Get the documents collection
+  var collection = db.collection('url');
+  // Find some documents
+  collection.find({'no': url}, {_id: false}).toArray(function(err, docs) {
+    assert.equal(err, null);
+    console.log("Found the following records for provided shortened url");
+    callback(docs);
+    specificDoc = docs;
+    console.log(docs);
+    console.log(specificDoc.length);
+  });
+};
+
+MongoClient.connect(MongoUrl, function(err, db) {
+  assert.equal(null, err);
+  console.log("Connected successfully to get server");
+  
+  findOne(db, function() {
+     db.close();
+    });
+    
+});
+}
+
+setTimeout(function(){
+   
+    if (specificDoc.length == 1) {
        
-       response.redirect(urlList[url]);
-       console.log("redirecting to " + urlList[url]);
+       response.redirect(specificDoc[0]['short-url']);
+       console.log("redirecting to " + specificDoc[0]['short-url']);
    }
    
-   else if (!isNaN(url) && !urlList[url]){
+   else if (!isNaN(url) && specificDoc.length == 0){
        response.send("Invalid shortened URL!");
        console.log("Invalid shortened URL!");
    }
    
    else {response.send("Invalid URL");}
-   
+}, 300);
 
 });
 
 
+///////////////////////////
 
 app.get('/:url*', function(request, response){
    
 
-   var link = request.url.slice(1);
+   link = request.url.slice(1);
 
   var hostname = request.headers.host; // hostname = 'localhost:8080'
-  var pathname = request.url.pathname; // pathname = '/MyApp'  
-   
-   
+ 
+
    if ( isURL(link.toString())  === false ) {
     
        response.send("Invalid URL");
@@ -70,15 +142,22 @@ app.get('/:url*', function(request, response){
     
   else {
       
-     urlList.push(link); 
-     var result = "original url: " + urlList[urlList.length-1]  + "\nshortened url: " + hostname + "/" + (urlList.length - 1);
+    MongoClient.connect(MongoUrl, function(err,db){
+       assert.equal(null, err);
+       console.log("Connected successfully to post server");
+       
+        insertDocuments (db, function() {
+     db.close();
+    });
+        
+    });
+    
+     var result = "original url: " + link + "\nshortened url: " + hostname + "/" + listEntry;
      response.end(result);
      console.log("created and added shortened URL to array");
         
       
   }
-    
-    
     
     
 });
