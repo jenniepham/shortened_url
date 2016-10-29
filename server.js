@@ -71,7 +71,7 @@ app.get('/:url*', function(request, response){
   else {
       
      urlList.push(link); 
-     var result = "original url: " + urlList[urlList.length-1]  + "\nshortened url: " + hostname + pathname + (urlList.length - 1);
+     var result = "original url: " + urlList[urlList.length-1]  + "\nshortened url: " + hostname + "/" + (urlList.length - 1);
      response.end(result);
      console.log("created and added shortened URL to array");
         
