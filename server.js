@@ -58,9 +58,8 @@ app.get('/:url*', function(request, response){
 
    var link = request.url.slice(1);
 
-
-//////////////////////////////////////////////
-  
+  var hostname = request.headers.host; // hostname = 'localhost:8080'
+  var pathname = request.url.pathname; // pathname = '/MyApp'  
    
    
    if ( isURL(link.toString())  === false ) {
@@ -72,7 +71,7 @@ app.get('/:url*', function(request, response){
   else {
       
      urlList.push(link); 
-     var result = "original url: " + urlList[urlList.length-1]  + "\nshortened url: " + "https://jennie-api-project-jpdomo.c9users.io/" + (urlList.length - 1);
+     var result = "original url: " + urlList[urlList.length-1]  + "\nshortened url: " + hostname + pathname + (urlList.length - 1);
      response.end(result);
      console.log("created and added shortened URL to array");
         
